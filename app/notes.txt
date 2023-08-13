@@ -316,3 +316,7 @@ git push
 **ALLOW UPDATE PROFILES**
 ***SUGGESTED COMMUNITIES & USERS***
 
+https://threads-app-two-virid.vercel.app/
+https://vercel.com/otbeynat/threads-app
+
+https://github.com/adrianhajdin/threads/tree/main
