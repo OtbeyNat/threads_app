@@ -235,8 +235,10 @@ clerk dashboard webhooks
 https://clerk.com/docs/users/sync-data-to-your-backend 
 https://docs.svix.com/receiving/verifying-payloads/why 
 
-lib/actions/community.actions.ts
-lib/models/community.model.ts
+***lib/actions/community.actions.ts
+***lib/models/community.model.ts
+
+.env.local ==> NEXT_CLERK_WEBHOOK_SECRET=
 
 -------------------------------------------
 
@@ -251,10 +253,65 @@ deply app with vercel.com
 - import github repo
 - copy environment variables (.env.local)
 
+next.config.js
+-
+typescript: {
+      ignoreBuildErrors: true,
+    },
 
-.env.local ==> NEXT_CLERK_WEBHOOK_SECRET=
+add url endpoint to clerk dashboard
+copy deployed app url (root url) => add to endpoint (/api/webhook/clerk)
+
+check:
+organization.created
+organization.deleted
+organization.updated
+
+organizationInvitation.accepted
+organizationInvitation.created
+organizationInvitation.revoked
+
+organizationMembership.created
+organizationMembership.deleted
+organizationMembership.updated
+
+Signing Secret ==> add to .env.local AND edit environment variables in project settings
+
+update PostThread.tsx to include organization/community
+
+update threadcard.tsx
+
+https://threads-app-two-virid.vercel.app/api/webhook/clerk
+
+update threads.actions.ts
+
+=====================================
+
+Community Details:
+(root)/communities/[id]/page.tsx
+
+update ProfileHeader including community type
+
+update ThreadsTab to include community type
+- fetchCommunityPosts => community.actions
 
 (root)/community/page.tsx
+- fetchCommunities => community.actions
+components/cards/CommunityCard.tsx
 
-***IMPLEMENT LIKE, SHARE, REPOST FUNCTIONALITIES FOR A THREAD***
+===========================================================
+
+components/shared/searchbar.tsx
+components/shared/pagination.tsx
+===========================================================
+** DELETE THREADS**
+- components/forms/DeleteThread.tsx
+
+git add .
+git commit -m 'message'
+git push
+=============================================================
+***IMPLEMENT LIKE, SHARE, REPOST, TAGGED, REQUEST FUNCTIONALITIES***
+**ALLOW UPDATE PROFILES**
+***SUGGESTED COMMUNITIES & USERS***
 
