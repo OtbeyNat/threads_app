@@ -307,6 +307,7 @@ components/shared/pagination.tsx
 ** DELETE THREADS**
 - components/forms/DeleteThread.tsx
 
+update github repo from cmd-line
 git add .
 git commit -m 'message'
 git push
