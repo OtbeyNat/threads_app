@@ -245,6 +245,11 @@ expose apis route deployment
 github.com/new
 - create new public repo
 
+push files to github
+
+deply app with vercel.com 
+- import github repo
+- copy environment variables (.env.local)
 
 
 .env.local ==> NEXT_CLERK_WEBHOOK_SECRET=
