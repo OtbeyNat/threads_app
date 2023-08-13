@@ -1,0 +1,255 @@
+Threads Web Application Notes
+========================================================================
+
+AUTH FOLDER for authentication routes
+
+auth/layout.tsx
+
+https://clerk.com/docs/nextjs/get-started-with-nextjs 
+create application with dashboard.clerk.com (nextjs)
+- install @clerk/nextjs
+- copy API keys, save to .env.local (environment keys)
+- all layout.tsx wrapped in <ClerkProvider>
+- middleware.ts (protecting application)
+    - add publicRoutes (organizations)
+    - add inogredRoutes
+- signin & signup components with specific path names
+    - (auth)sign-in/[...sign-in]
+    - (auth)sign-up/[...sign-up]
+- update routes after signin/signup
+    - signIn, signUp, afterSignUp, afterSignIn paths
+    - afterSignIn goes to /onboarding route
+==========================================================================
+Create Layout of Home Page
+
+(root)/layout.tsx
+- ClerkProvider
+- html & body & reusable components & children ==> (page.tsx)
+- shared components outisde of (auth) and (root) folders
+** look at globals.css + tailwindconfig.ts ==> styles
+- assets in public folder
+- constants folder for layout information (sidebarLinks)
+
+-Clerk components:
+- <SignedIn><SignedIn/> ==> (only shows code within the block if signed in)
+- SignOutButton (nested in SignedIn component)
+- Organization Switcher Component (nested)
+
+- "use client";
+- useRouter() / usePathname()
+- signout button onClick Callback Function ==> router.push("/sign-in")
+- Link and Image components from next/xxx
+
+Left and Bottom Bar ==> navigation Links
+
+
+RightBar ...
+...
+...
+
+========================================================================
+ONBOARDING
+
+(auth)/onboarding/page.tsx => layout of onboarding (after signin) page
+- updates profile information
+- async function Page()
+- currentUser => clerk/nextjs (returns data of current user)
+    - user in the database
+
+- objectId = database; id = clerk currentUser; other info = CurrentUser
+- pass user information into AccountProfile as a prop
+
+-------------
+components/forms/AccountProfile.tsx
+takes in Props => includes interface Props {...}
+
+declare form data:
+- form = useForm() ==> 'react-hook-form'
+    - resolver: zodResolver(userValidation) ==> creates schemas for the fields in a form
+    https://zod.dev/ 
+    userValidation:
+        - lib/validations/user.ts
+            - define different fields
+    - defaultValues: 
+        - {object including form fields and values}
+        - pull from clerk currentUser
+
+https://ui.shadcn.com/docs/components/form 
+shadcn/ui
+- npx shadcn-ui@latest init
+    - this updates globals.css & tailwindconfig.js & lib/utils
+    - MIGHT HAVE TO REUPDATE STYLES AND CONFIG AGAIN
+- npx shadcn-ui@ latest add form (add component)
+Build form:
+    - import components from ui/form
+    - npx shadcn-ui@ latest add input
+    - copy form template, onSubmit from docs
+        - onsubmit takes in formSchema (userValidation from zod)
+    - handleImage (ChangeEvent when uploading a image)
+    <FormField
+        control=... name=... 
+        render={({field}) => (...)}
+    />
+    - style root level Form and individual FormItem(s)
+- render image from clerk (pfp)
+
+next.config.js:
+- allow images from clerk and other sites
+- allow serverComponentsExternalPackages -> mongoose
+
+Upload Image:
+- [files, setFiles] = useState<File>[]([])
+    const handleImage = (e: ChangeEvent<HTMLInputElement>, fieldChange: (value: string) => void) => {
+        e.preventDefault();
+        const fileReader = new FileReader();
+
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+
+            setFiles(Array.from(e.target.files));
+
+            if (!file.type.includes('image')) return;
+
+            fileReader.onload = async (event) => {
+                const imageDataUrl = event.target?.result?.toString() || '';
+                fieldChange(imageDataUrl)
+            }
+            fileReader.readAsDataURL(file);
+        }
+    }
+    
+onSubmit:
+- value from image = blob
+    - get blob from values.profile_photo
+    - check if image changed: util function
+        - lib/utils: isBase64Image
+        =====================
+        - useUploadThing https://docs.uploadthing.com/ 
+            - lib/uploadthing.ts
+                - API Reference -> React -> generateReactHelpers
+            
+            https://docs.uploadthing.com/nextjs/appdir 
+            /app/api/uploadthing/core.ts:
+                - nextjs Setup -> App Router -> copy core.ts
+                - replace "imageUploader" with "media"
+                - maxFileCount: 1 ==> one image allowed
+
+                - import currentUser from clerk
+                - getUser = async() => await CurrentUser()
+
+                .middleware
+                    - replace "auth()" with "getUser()"
+
+            /app/api/uploadthing/route.ts:
+                - Create a Next.js API route using the FileRouter
+
+            AccountProfile.tsx -> import useUploadThing
+            - startUpload = useUploadThing("media")
+        
+        - if image changed, upload the image with uploadthing
+            - const imgRes = await startUpload(files)
+            - if imgRes exists and fileUrl exists
+                - values.profile_photo = imgRes[0].fileUrl
+
+    - call backend to update profile
+========================================================================
+Backend
+
+lib/actions/user.actions.ts
+- "use server";
+
+lib/mongoose.ts ==> connect to DB
+
+mongodb.com => create new => put url into .env.local
+
+lib/models/user.model.ts => create schema for User
+
+import User => user.actions.ts
+- updateUser:
+    - connectToDB
+    - User.findOneAndUpdate
+    - user object containing user info and pass as params/props to user.actions.ts
+        - interface Params containing userInfo
+    - create a project in uploadthing => copy api keys to .env.local
+
+- Create Thread:
+    (root)/create-thread/page.tsx
+    users.actions => fetchUser
+    components/forms/PostThread.tsx
+    lib/valdiations/thread.ts => threadvalidation (zod)
+    lib/actions/thread.actions.ts => createThread
+    - "use server"
+    lib/models/thread.model.ts => Thread model
+
+========================================================================
+fetchPosts in Home Page
+(root)/page.tsx
+
+thread.actions.ts => fetchPosts 
+- ** lot of mongoose functions (prob need to look over docs)
+
+
+======================================================================
+components/card/ThreadCard.tsx
+
+(root)/thread/[id]/page.tsx ==> ThreadCard
+thread.actions ==> fetchThreadById
+
+components/forms/Comment
+
+=======================================================================
+(root)/profile/[id]/page.tsx
+
+components/shared/ProfileHeader.tsx
+shadcn tabs
+components/shared/ThreadsTab.tsx
+
+user.actions.ts ==> fetchUserPosts
+
+- update leftsidebar to properly redirect with correct userId
+
+==========================================================================
+Search:
+
+(root)/search/page.tsx
+
+user.actions.ts ==> fetchUsers
+
+components/cards/UserCard.tsx
+
+==========================================================================
+
+Activity:
+
+(root)/activity/page.tsx
+
+user.actions.ts ==> getActivity
+
+==========================================================================
+
+Community:
+
+webhooks:
+app/api/webhook/clerk/route.ts
+clerk dashboard webhooks
+https://clerk.com/docs/users/sync-data-to-your-backend 
+https://docs.svix.com/receiving/verifying-payloads/why 
+
+lib/actions/community.actions.ts
+lib/models/community.model.ts
+
+-------------------------------------------
+
+expose apis route deployment
+
+github.com/new
+- create new public repo
+
+
+
+.env.local ==> NEXT_CLERK_WEBHOOK_SECRET=
+
+(root)/community/page.tsx
+
+***IMPLEMENT LIKE, SHARE, REPOST FUNCTIONALITIES FOR A THREAD***
+
